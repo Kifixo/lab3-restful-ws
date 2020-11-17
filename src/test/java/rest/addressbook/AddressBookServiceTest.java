@@ -3,6 +3,7 @@ package rest.addressbook;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.io.IOException;
 import java.net.URI;
@@ -41,7 +42,7 @@ public class AddressBookServiceTest {
     AddressBook ab = new AddressBook();
     launchServer(ab);
 
-    List<Person> preRequestList = ab.getPersonList();
+    List<Person> preRequestList = new ArrayList<>(ab.getPersonList());
 
     // Get server response
     Client client = ClientBuilder.newClient();
@@ -75,15 +76,12 @@ public class AddressBookServiceTest {
     Person juan = new Person();
     juan.setName("Juan");
     URI juanURI = URI.create("http://localhost:8282/contacts/person/1");
-    List<Person> preRequestList = ab.getPersonList();
 
     // Create a new user
     Client client = ClientBuilder.newClient();
     Response response = client.target("http://localhost:8282/contacts")
       .request(MediaType.APPLICATION_JSON)
       .post(Entity.entity(juan, MediaType.APPLICATION_JSON));
-
-
 
     assertEquals(201, response.getStatus());
     assertEquals(juanURI, response.getLocation());
@@ -105,13 +103,13 @@ public class AddressBookServiceTest {
 
     // Verify that is not safe
     List<Person> postRequestList = ab.getPersonList();
-    assertNotEquals(preRequestList, postRequestList);
+    assertEquals(1, postRequestList.size());
 
     // Verify that is idemponent
     Response response2 = client.target("http://localhost:8282/contacts")
             .request(MediaType.APPLICATION_JSON)
             .post(Entity.entity(juan, MediaType.APPLICATION_JSON));
-    assertEquals(201, response.getStatus());
+    assertEquals(200, response.getStatus());
     assertEquals(MediaType.APPLICATION_JSON_TYPE, response.getMediaType());
     assertNotEquals(juanURI, response2.getLocation());
     assertNotEquals(juanURI, response2.readEntity(Person.class).getId());
@@ -156,8 +154,6 @@ public class AddressBookServiceTest {
     assertEquals(3, mariaUpdated.getId());
     assertEquals(mariaURI, mariaUpdated.getHref());
 
-    List<Person> preRequestList = ab.getPersonList();
-
     // Check that the new user exists
     response = client.target("http://localhost:8282/contacts/person/3")
       .request(MediaType.APPLICATION_JSON).get();
@@ -168,16 +164,25 @@ public class AddressBookServiceTest {
     assertEquals(3, mariaUpdated.getId());
     assertEquals(mariaURI, mariaUpdated.getHref());
 
+    /*
+    Response newContactList = client.target("http://localhost:8282/contacts")
+            .request().get();
+    assertEquals(200, response.getStatus());
+    assertEquals(response.readEntity(AddressBook.class).getPersonList().size(),
+            response2.readEntity(AddressBook.class).getPersonList().size());
+    */
+
     // Verify that is safe
-    List<Person> postRequestList = ab.getPersonList();
-    assertEquals(preRequestList, postRequestList);
+    assertEquals(3, ab.getPersonList().size());
+
+
 
     // Verify that is idemponent
     Response response2 = client.target("http://localhost:8282/contacts/person/3")
             .request(MediaType.APPLICATION_JSON).get();
-    assertEquals(200, response.getStatus());
+    assertEquals(200, response2.getStatus());
     assertEquals(MediaType.APPLICATION_JSON_TYPE, response2.getMediaType());
-    mariaUpdated = response.readEntity(Person.class);
+    mariaUpdated = response2.readEntity(Person.class);
     assertEquals(maria.getName(), mariaUpdated.getName());
     assertEquals(3, mariaUpdated.getId());
     assertEquals(mariaURI, mariaUpdated.getHref());
@@ -196,7 +201,7 @@ public class AddressBookServiceTest {
     ab.getPersonList().add(juan);
     launchServer(ab);
 
-    List<Person> preRequestList = ab.getPersonList();
+    List<Person> preRequestList = new ArrayList<>(ab.getPersonList());
 
     // Test list of contacts
     Client client = ClientBuilder.newClient();
@@ -212,7 +217,7 @@ public class AddressBookServiceTest {
 
     // Verify that is safe
     List<Person> postRequestList = ab.getPersonList();
-    assertEquals(preRequestList, postRequestList);
+    assertEquals(preRequestList.size(), postRequestList.size());
 
     // Verify that is idemponent
     Response response2 = client.target("http://localhost:8282/contacts")
@@ -243,8 +248,6 @@ public class AddressBookServiceTest {
     ab.getPersonList().add(juan);
     launchServer(ab);
 
-    List<Person> preRequestList = ab.getPersonList();
-
     // Update Maria
     Person maria = new Person();
     maria.setName("Maria");
@@ -259,8 +262,6 @@ public class AddressBookServiceTest {
     assertEquals(maria.getName(), juanUpdated.getName());
     assertEquals(2, juanUpdated.getId());
     assertEquals(juanURI, juanUpdated.getHref());
-
-
 
     // Verify that the update is real
     response = client.target("http://localhost:8282/contacts/person/2")
@@ -280,17 +281,17 @@ public class AddressBookServiceTest {
 
     // Verify that is not safe
     List<Person> postRequestList = ab.getPersonList();
-    assertNotEquals(preRequestList, postRequestList);
+    assertEquals(postRequestList.get(1).getName(), maria.getName());
 
     // Verify that is idemponent
-    Response response2 = client.target("http://localhost:8282/contacts/person/2")
+    response = client.target("http://localhost:8282/contacts/person/2")
             .request(MediaType.APPLICATION_JSON).get();
     assertEquals(200, response.getStatus());
     assertEquals(MediaType.APPLICATION_JSON_TYPE, response.getMediaType());
-    Person mariaRetrieved2 = response.readEntity(Person.class);
-    assertEquals(maria.getName(), mariaRetrieved2.getName());
-    assertEquals(2, mariaRetrieved2.getId());
-    assertEquals(juanURI, mariaRetrieved2.getHref());
+    Person maria2 = response.readEntity(Person.class);
+    assertEquals(maria2.getName(), maria2.getName());
+    assertEquals(2, maria2.getId());
+    assertEquals(juanURI, maria2.getHref());
 
   }
 
@@ -308,7 +309,7 @@ public class AddressBookServiceTest {
     ab.getPersonList().add(juan);
     launchServer(ab);
 
-    List<Person> preRequestList = ab.getPersonList();
+    List<Person> preRequestList = new ArrayList<>(ab.getPersonList());
 
     // Delete a user
     Client client = ClientBuilder.newClient();
@@ -329,7 +330,7 @@ public class AddressBookServiceTest {
 
     // Verify that is not safe
     List<Person> postRequestList = ab.getPersonList();
-    assertNotEquals(preRequestList, postRequestList);
+    assertNotEquals(preRequestList.size(), postRequestList.size());
 
   }
 
