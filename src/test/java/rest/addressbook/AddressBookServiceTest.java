@@ -326,7 +326,7 @@ public class AddressBookServiceTest {
     // Verify that is idemponent
     Response response2 = client.target("http://localhost:8282/contacts/person/2")
             .request().delete();
-    assertEquals(404, response2.getStatus());
+    assertEquals(404, response2.getStatus()); // BUG!! This should return 204 in order to be idemponent!
 
     // Verify that is not safe
     List<Person> postRequestList = ab.getPersonList();
